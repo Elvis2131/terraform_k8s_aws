@@ -36,6 +36,28 @@ resource "aws_route_table" "public_rw" {
     tags = { "Name" = "k8s-public-subnet-rt" }
 }
 
+
+resource "aws_route_table" "private_rw" {
+    vpc_id = aws_vpc.main.id
+
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_nat_gateway.private-sub-ngw.id
+    }
+
+    tags = { "Name" = "k8s-private-subnet-rt" }
+}
+
+resource "aws_route_table_association" "k8sPrivatertOne" {
+    subnet_id = aws_subnet.k8s_subnet["private_az_one"].id
+    route_table_id = aws_route_table.private_rw.id
+}
+
+resource "aws_route_table_association" "k8sPrivatertTwo" {
+    subnet_id =  aws_subnet.k8s_subnet["private_az_two"].id
+    route_table_id = aws_route_table.private_rw.id
+}
+
 resource "aws_route_table_association" "k8sPublicrt" {
     subnet_id = aws_subnet.k8s_subnet["public_az"].id
     route_table_id = aws_route_table.public_rw.id

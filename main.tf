@@ -4,8 +4,15 @@ provider "aws" {
     secret_key = var.secret_key
 }
 
-module "vpc" { source     = "./modules/vpc" }
+module "vpc" { 
+    source     = "./modules/vpc" 
+    }
 
-module "k8s" { source     = "./modules/k8s" }
+module "k8s" { 
+    source     = "./modules/k8s" 
+    k8s_eks_role_arn = module.iamrole.k8s_eks_role_arn
+    k8s_wn_role_arn = module.iamrole.iam_role_worker
+    k8s_subnets = module.vpc.subnets
+    }
 
 module "iamrole" { source     = "./modules/iamrole" }

@@ -40,3 +40,23 @@ resource "aws_route_table_association" "k8sPublicrt" {
     subnet_id = aws_subnet.k8s_subnet["public_az"].id
     route_table_id = aws_route_table.public_rw.id
 }
+
+resource "aws_eip" "eip" {
+    vpc = true
+    public_ipv4_pool = "amazon"
+
+    tags = {
+      "Name" = "k8s-ngw"
+    }
+}
+
+resource "aws_nat_gateway" "private-sub-ngw" {
+    allocation_id = aws_eip.eip.id
+    subnet_id = aws_subnet.k8s_subnet["public_az"].id
+
+    tags = {
+        "Name" = "Nat gateway"
+    }
+
+    depends_on = [aws_internet_gateway.k8s-igw]
+}

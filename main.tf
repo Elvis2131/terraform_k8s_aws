@@ -16,7 +16,6 @@ module "k8s" {
     }
 
 module "iamrole" { source     = "./modules/iamrole" }
-
 module "oidc_role"{
     source = "./modules/oidc_role"
     k8s_cluster_url = module.k8s.cluster_oidc_url

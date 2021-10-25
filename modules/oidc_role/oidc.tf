@@ -24,7 +24,7 @@ resource "aws_iam_role" "k8s_role" {
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "${var.k8s_cluster_url}:sub": "system:serviceaccount:${var.k8s_namespace}:${var.k8s_service_account}"
+          "${trimprefix(var.k8s_cluster_url, "https://")}:sub": "system:serviceaccount:${var.k8s_namespace}:${var.k8s_service_account}"
         }
       }
     }

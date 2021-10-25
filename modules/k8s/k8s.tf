@@ -27,21 +27,45 @@ resource "aws_eks_node_group" "eksNodes" {
     remote_access{
       ec2_ssh_key = aws_key_pair.workerNodeskp.id
     }
-    
-
 }
 
 resource "aws_key_pair" "workerNodeskp" {
     key_name = var.key_name
-    public_key = file("C:\\Users\\ELVIS LARTEY\\.ssh\\id_rsa.pub")
+    public_key = file(var.publicKey)
+}
+
+data "external" "thumb" {
+  program = ["kubergrunt", "eks", "oidc-thumbprint", "--issuer-url", aws_eks_cluster.k8s_cluster.identity.0.oidc.0.issuer]
 }
 
 resource "aws_iam_openid_connect_provider" "k8s_tf" {
   url = aws_eks_cluster.k8s_cluster.identity.0.oidc.0.issuer
 
-  client_id_list = ["sts.amazonaws.com",]
+  client_id_list = ["sts.amazonaws.com"]
 
-  thumbprint_list = []
+  thumbprint_list = [data.external.thumb.result.thumbprint]
+}
+
+resource "aws_iam_role" "k8s_role" {
+  name = "test-role"
+
+  assume_role_policy = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "${aws_iam_openid_connect_provider.k8s_tf.arn}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${aws_eks_cluster.k8s_cluster.identity.0.oidc.0.issuer}:sub": "system:serviceaccount:${var.k8s_namespace}:${var.k8s_service_account}"
+        }
+      }
+    }
+  ]
+})
 }
 
 resource "aws_iam_policy" "k8s_autoscaler_policy"{
@@ -65,4 +89,9 @@ resource "aws_iam_policy" "k8s_autoscaler_policy"{
       }
   ]
 })
+}
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.k8s_role.name
+  policy_arn = aws_iam_policy.k8s_autoscaler_policy.arn
 }

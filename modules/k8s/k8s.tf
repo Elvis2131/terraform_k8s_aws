@@ -27,42 +27,9 @@ resource "aws_eks_node_group" "eksNodes" {
     remote_access{
       ec2_ssh_key = aws_key_pair.workerNodeskp.id
     }
-    
-
 }
 
 resource "aws_key_pair" "workerNodeskp" {
     key_name = var.key_name
-    public_key = file("C:\\Users\\ELVIS LARTEY\\.ssh\\id_rsa.pub")
-}
-
-resource "aws_iam_openid_connect_provider" "k8s_tf" {
-  url = aws_eks_cluster.k8s_cluster.identity.0.oidc.0.issuer
-
-  client_id_list = ["sts.amazonaws.com",]
-
-  thumbprint_list = []
-}
-
-resource "aws_iam_policy" "k8s_autoscaler_policy"{
-    name = "k8s-auto-scaler-policy"
-
-    policy = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
-      {
-          "Action": [
-              "autoscaling:DescribeAutoScalingGroups",
-              "autoscaling:DescribeAutoScalingInstances",
-              "autoscaling:DescribeLaunchConfigurations",
-              "autoscaling:DescribeTags",
-              "autoscaling:SetDesiredCapacity",
-              "autoscaling:TerminateInstanceInAutoScalingGroup",
-              "ec2:DescribeLaunchTemplateVersions"
-          ],
-          "Resource": "*",
-          "Effect": "Allow"
-      }
-  ]
-})
+    public_key = file(var.publicKey)
 }

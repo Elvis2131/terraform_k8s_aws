@@ -1,9 +1,42 @@
 terraform {
   backend "s3"{
-      bucket = "tf_bucket"
-      key    = "main/terraform.tfstate"
+      bucket = "tf-bucket021"
+      key    = "global/k8s/terraform.tfstate"
       region = "us-east-1"
+      dynamodb_table = "terraform-state-locking"
+      encrypt = true
   }
+}
+
+resource "aws_s3_bucket" "tf-bucket021" {
+    bucket = "tf-bucket021"
+
+    # lifecycle {
+    #   prevent_destroy = true
+    # }
+
+    versioning {
+      enabled = true
+    }
+
+    server_side_encryption_configuration {
+      rule{
+          apply_server_side_encryption_by_default{
+              sse_algorithm = "AES256"
+          }
+      }
+    }
+}
+
+resource "aws_dynamodb_table" "terraform_locks"{
+    name = "terraform-state-locking"
+    billing_mode = "PAY_PER_REQUEST"
+    hash_key = "LockID"
+
+    attribute {
+      name = "LockID"
+      type = "S"
+    }
 }
 
 provider "aws" {
